@@ -1,0 +1,64 @@
+---
+title: "Bayesian LCA"
+output: html_document
+date: '2022-07-02'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Latent Class Analysis
+
+This latent class analysis project, we assume the indicator variables are dichotomous. 
+
+### Simulating the dichotomous variables
+Suppose there are $M$ dichotomously scored items $(Y_1, Y_2, Y_3, \ldots, Y_M)$ observed on $N$ participants for measuring a latent trait, $\theta$. Based on the responses to these categorical indicators, the participants can be categorized into $c$ classes. 
+Suppose that the $c = \{2, 3, \dots, K\}$ class have marginal probabilities $P = \{p_1, p_2, \ldots, p_K \}$ such that $\sum_{c = 1}^{K} p_c = 1$
+
+```{r}
+library(data.table)
+LCA_sim <- function(NC, NI, N, p, cp){
+  p <- p/sum(p)
+  cl <- sample(x = 1:NC, size = N, replace = TRUE, prob = p)
+  y <- matrix(nrow = N, ncol = NI)
+  
+  for(i in 1:N){
+    for(j in 1:NC) {
+      if(cl[i] == j){
+        y[i, ] <- rbinom(n = rep(1, NI), size = rep(1, NI), prob = cp[j,])
+      }
+    }
+  }
+  Y <- as.data.frame(y)
+  colnames(Y)<- paste0("V", 1:NI)
+  Y$group <- cl
+  return(Y)
+}
+
+p <- c(.21, .62, .17)
+
+cp <- matrix(data = c(.7, .35, .05, .09, .31, .06, .01, .05, .72, .49, .3, .62), 
+             ncol = 4, nrow = 3, byrow = TRUE)
+
+cp
+```
+
+Simulating a dataset 
+```{r}
+Y <- LCA_sim(NC = 3, NI = 4, N = 500, p = p, cp = cp)
+Y <- data.table(Y)
+
+Y[, lapply(.SD, mean), by = group, .SDcols = paste0("V", 1:4)][order(group),]
+```
+
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
